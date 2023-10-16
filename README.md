@@ -24,6 +24,12 @@ Installing xx3dsfml is as simple as compiling the xx3dsfml.cpp code. A Makefile 
 1. make:	This will create the executable which can be executed via the ./xx3dsfml command.
 2. make clean:	This will remove all files (including the executable) created by the above command.
 
+#### Window modes
+
+Currently support single window and split window to achieve this behavior just change the code before make
+#define WINDOWS 1 // for single view
+#define WINDOWS 2 // for split view
+
 #### Controls
 
 *Note: All of the following numeric controls are accomplished via the Number Row and not the Numeric Keypad.*
@@ -39,6 +45,8 @@ The following is a list of controls currently available in the xx3dsfml program:
 - 5 key: Rotates the window 90 degrees counterclockwise.
 - 6 key: Rotates the window 90 degrees clockwise.
 
+When you are in 2 window mode you should input Keys on top Screen
+
 #### Notes
 
 This software currently lacks audio support as I'm unable to get the capture card in a state where it'll output more than just the frame data. This is still a work in progress, but I'm unsure if I'll ever be able to figure out how to get the capture card to output any audio data. In the meantime, audio can be captured directly from the AUX port on the N3DSXL over a line level input as a workaround.
@@ -46,3 +54,5 @@ This software currently lacks audio support as I'm unable to get the capture car
 #### Media
 
 ![xx3dsfml](xx3dsfml.png "xx3dsfml")
+
+![xx3dsfml2](xx3dsfml2.png "xx3dsfml2")
