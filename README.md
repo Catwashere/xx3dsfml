@@ -39,7 +39,7 @@ When the xx3dsfml program is executed, it will attempt to open a connected N3DSX
 The following is a list of controls currently available in the xx3dsfml program:
 
 - 0 key: Single view or Split views
-- ---1 key: Opens a connected N3DSXL if not yet open, otherwise closes a connected N3DSXL if open.--- Now this is automatic
+- ~~1 key: Opens a connected N3DSXL if not yet open, otherwise closes a connected N3DSXL if open.~~ Now this is automatic
 - 2 key: Toggles smoothing on/off. This is only noticeable at 2x scale or greater.
 - 3 key: Decrements the scaling. 1x is the minimum and the default.
 - 4 key: Increments the scaling. 4x is the maximum.
