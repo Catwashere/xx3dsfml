@@ -45,8 +45,10 @@ The following is a list of controls currently available in the xx3dsfml program:
 - 4 key: Increments the scaling. 4x is the maximum.
 - 5 key: Rotates the window 90 degrees counterclockwise.
 - 6 key: Rotates the window 90 degrees clockwise.
+- 7 key: Decrements volume. 0 is the minimum.
+- 8 key: Increments volume. 100 is the maximum and the default.
 
-When you are in 2 window mode you should input Keys on top Screen
+==When you are in 2 window mode you need to input keys on top screen==
 
 #### Notes
 

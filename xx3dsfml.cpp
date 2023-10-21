@@ -77,7 +77,6 @@ public:
 	N3DSAudio(){
 		initialize(AUDIO_CHANNELS, AUDIO_SAMPLE_RATE);
 		setProcessingInterval(sf::milliseconds(0));
-		setVolume(20);
 	} 
 
 	void queue(IntVector samples){
@@ -519,6 +518,7 @@ void render() {
 
 	int scale = 1;
 	int last_idx = -1;
+	int volume = 100;
 
 	int windows = WINDOWS;
 
@@ -703,6 +703,16 @@ change:
 							win[0]->setSize(sf::Vector2u(win_width * scale, win_height * scale));
 						}
 
+						break;
+
+					case sf::Keyboard::Num7:
+						volume -= volume <= 0 ? 0 : 10;
+						audioStream->setVolume(volume);
+						break;
+
+					case sf::Keyboard::Num8:
+						volume += volume >= 100 ? 0 : 10;
+						audioStream->setVolume(volume);
 						break;
 
 					case sf::Keyboard::Num0:
