@@ -48,7 +48,7 @@ The following is a list of controls currently available in the xx3dsfml program:
 - 7 key: Decrements volume. 0 is the minimum.
 - 8 key: Increments volume. 100 is the maximum and the default.
 
-==When you are in 2 window mode you need to input keys on top screen==
+<mark>When you are in 2 window mode you need to input keys on top screen</mark>
 
 #### Notes
 
