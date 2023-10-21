@@ -34,12 +34,12 @@ Currently support single window and split window to change this startup behavior
 
 *Note: All of the following numeric controls are accomplished via the Number Row and not the Numeric Keypad.*
 
-When the xx3dsfml program is executed, it will attempt to open a connected N3DSXL for capture once at start. However, an N3DSXL can be connected at any time while the software is running but will require it to be manually opened using the 1 key in this case. Pressing the 1 key at any time while an N3DSXL is open will close it and vice versa. If an open N3DSXL is disconnected at any time while the software is running, the device will automatically close and should be reopened via the 1 key when reconnected.
+When the xx3dsfml program is executed, it will attempt to open a connected N3DSXL for capture once at start. However, an N3DSXL can be connected at any time while the software is running. Sometimes software cannot perform all validation and will ask to reconnect 3ds.
 
 The following is a list of controls currently available in the xx3dsfml program:
 
 - 0 key: Single view or Split views
-- 1 key: Opens a connected N3DSXL if not yet open, otherwise closes a connected N3DSXL if open.
+- ---1 key: Opens a connected N3DSXL if not yet open, otherwise closes a connected N3DSXL if open.--- Now this is automatic
 - 2 key: Toggles smoothing on/off. This is only noticeable at 2x scale or greater.
 - 3 key: Decrements the scaling. 1x is the minimum and the default.
 - 4 key: Increments the scaling. 4x is the maximum.
