@@ -404,7 +404,7 @@ start:
 		if(disconnect_and_connect){
 			printf("[%s] please disconnect and connect cable.\n", NAME);
 		}else{
-			printf("[%s] please connect 3ds                 .\n", NAME);
+			printf("[%s] please connect 3ds.                 \n", NAME);
 
 			if(info[0]){
 				connected = open();
