@@ -1,4 +1,6 @@
 .vscode/*
 xx3dsfml.app/*
 Xx3dsfml.dSYM/*
-Xx3dsfml.o
+*.o
+xx3dsfml
+imgui.ini

@@ -6,7 +6,7 @@ xx3dsfml is a multi-platform capture program for [3dscapture's](https://3dscaptu
 
 *Note: The following instructions are for Linux.*
 
-xx3dsfml has two dependencies, [FTDI's D3XX driver](https://ftdichip.com/drivers/d3xx-drivers/) and [SFML](https://www.sfml-dev.org/).
+xx3dsfml has two dependencies, [FTDI's D3XX driver](https://ftdichip.com/drivers/d3xx-drivers/) and [SFML v2.6](https://www.sfml-dev.org/).
 
 The D3XX driver can be downloaded from the link above which also contains the installation instructions. However, in order to compile the xx3dsfml.cpp code, two additional steps need to be taken:
 
@@ -32,27 +32,11 @@ Currently support single window and split window to change this startup behavior
 
 #### Controls
 
-*Note: All of the following numeric controls are accomplished via the Number Row and not the Numeric Keypad.*
+This branch contains a menu done with imgui
+[imgui](https://github.com/ocornut/imgui) [v1.87](https://github.com/ocornut/imgui/archive/refs/tags/v1.87.tar.gz)
+[imgui-sfml](https://github.com/SFML/imgui-sfml) [v2.5](https://github.com/SFML/imgui-sfml/archive/refs/tags/v2.5.tar.gz)
 
 When the xx3dsfml program is executed, it will attempt to open a connected N3DSXL for capture once at start. However, an N3DSXL can be connected at any time while the software is running. Sometimes software cannot perform all validation and will ask to reconnect 3ds.
-
-The following is a list of controls currently available in the xx3dsfml program:
-
-- 0 key: Single view or Split views
-- ~~1 key: Opens a connected N3DSXL if not yet open, otherwise closes a connected N3DSXL if open.~~ Now this is automatic
-- 2 key: Toggles smoothing on/off. This is only noticeable at 2x scale or greater.
-- 3 key: Decrements the scaling. 1x is the minimum and the default.
-- 4 key: Increments the scaling. 4x is the maximum.
-- 5 key: Rotates the window 90 degrees counterclockwise.
-- 6 key: Rotates the window 90 degrees clockwise.
-- 7 key: Decrements volume. 0 is the minimum.
-- 8 key: Increments volume. 100 is the maximum and the default.
-
-<mark>When you are in 2 window mode you need to input keys on top screen</mark>
-
-#### Notes
-
-This software currently lacks audio support as I'm unable to get the capture card in a state where it'll output more than just the frame data. This is still a work in progress, but I'm unsure if I'll ever be able to figure out how to get the capture card to output any audio data. In the meantime, audio can be captured directly from the AUX port on the N3DSXL over a line level input as a workaround.
 
 #### Media
 

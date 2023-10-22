@@ -7,11 +7,14 @@
 #include <libftd3xx/ftd3xx.h>
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
+#include <SFML/System.hpp>
 #include <thread>
 #include <unistd.h> 
 #include <iostream>
 #include <queue>
 #include <vector>
+#include "imgui/imgui.h"
+#include "imgui/imgui-SFML.h"
 
 #define WINDOWS 1
 
@@ -516,15 +519,20 @@ void render() {
 
 	int win_width, win_height, wint_width, wint_height, winb_width, winb_height;
 
-	int scale = 1;
+	int scale[2] = {1, 1};
+	int rotate[2] = {0, 0};
 	int last_idx = -1;
 	int volume = 100;
+	bool split_window = (WINDOWS == 2);
+	bool mute = false;
 
-	int windows = WINDOWS;
+	int windows = split_window?2:1;
 
 	const char * name = NAME;
 
 	UCHAR out_buf[RGBA_FRAME_SIZE];
+	sf::RenderWindow* menu = new sf::RenderWindow(sf::VideoMode(300, 200), NAME);
+	ImGui::SFML::Init(*menu);
 	sf::RenderWindow* win[2];
 
 	sf::RectangleShape top_rect(sf::Vector2f(wint_height, wint_width));
@@ -536,251 +544,329 @@ void render() {
 	sf::RenderTexture out_tex;
 
 	sf::Event event;	
-
+	sf::Clock deltaClock;
 	N3DSAudio *audioStream = new N3DSAudio();
 
+	ImGuiWindowFlags window_flags = 0;
+    window_flags |= ImGuiWindowFlags_NoTitleBar;
+    window_flags |= ImGuiWindowFlags_NoScrollbar;
+    window_flags |= ImGuiWindowFlags_NoMove;
+    window_flags |= ImGuiWindowFlags_NoResize;
+    window_flags |= ImGuiWindowFlags_NoCollapse;
+    window_flags |= ImGuiWindowFlags_NoNav;
+	window_flags |= ImGuiWindowFlags_NoDecoration;
+
 change:
-	win_width = TOP_WIDTH;
-	win_height = TOP_HEIGHT + BOT_HEIGHT;
-
-	wint_width = TOP_WIDTH;
-	wint_height = TOP_HEIGHT;
-
-	winb_width = BOT_WIDTH;
-	winb_height = BOT_HEIGHT;
-
-	top_rect.setRotation(0);
-	bot_rect.setRotation(0);
-	out_rect.setRotation(0);
-
-	if(windows == 2){
-		win[0] = new sf::RenderWindow(sf::VideoMode(wint_width, wint_height), TNAME);
-		win[1] = new sf::RenderWindow(sf::VideoMode(winb_width, winb_height), BNAME);
+	if(!connected){
+		windows = 0;
 	}else{
-		win[0] = new sf::RenderWindow(sf::VideoMode(win_width, win_height), NAME);
-	}
+		win_width = TOP_WIDTH;
+		win_height = TOP_HEIGHT + BOT_HEIGHT;
 
-	win[0]->setFramerateLimit(FRAMERATE + FRAMERATE / 2);
-	win[0]->setKeyRepeatEnabled(false);
-	
-	if(windows == 2){
-		win[1]->setFramerateLimit(FRAMERATE + FRAMERATE / 2);
-		win[1]->setKeyRepeatEnabled(false);
+		wint_width = TOP_WIDTH;
+		wint_height = TOP_HEIGHT;
 
-		sf::View viewt(sf::FloatRect(0, 0, wint_width, wint_height));
-		win[0]->setView(viewt);
+		winb_width = BOT_WIDTH;
+		winb_height = BOT_HEIGHT;
 
-		sf::View viewb(sf::FloatRect(0, 0, winb_width, winb_height));
-		win[1]->setView(viewb);
+		top_rect.setRotation(0);
+		bot_rect.setRotation(0);
+		out_rect.setRotation(0);
 		
-		win[0]->setSize(sf::Vector2u(wint_width * scale, wint_height * scale));
-		win[1]->setSize(sf::Vector2u(winb_width * scale, winb_height * scale));
-	}else{
-		sf::View view(sf::FloatRect(0, 0, win_width, win_height));
-		win[0]->setView(view);
-		win[0]->setSize(sf::Vector2u(win_width * scale, win_height * scale));
+		if(windows == 2){
+			win[0] = new sf::RenderWindow(sf::VideoMode(wint_width, wint_height), TNAME);
+			win[1] = new sf::RenderWindow(sf::VideoMode(winb_width, winb_height), BNAME);
+		}else{
+			win[0] = new sf::RenderWindow(sf::VideoMode(win_width, win_height), NAME);
+		}
+
+		win[0]->setFramerateLimit(FRAMERATE + FRAMERATE / 2);
+		win[0]->setKeyRepeatEnabled(false);
+		
+		if(windows == 2){
+			win[1]->setFramerateLimit(FRAMERATE + FRAMERATE / 2);
+			win[1]->setKeyRepeatEnabled(false);
+
+			sf::View viewt(sf::FloatRect(0, 0, wint_width, wint_height));
+			win[0]->setView(viewt);
+
+			sf::View viewb(sf::FloatRect(0, 0, winb_width, winb_height));
+			win[1]->setView(viewb);
+			
+			win[0]->setSize(sf::Vector2u(wint_width * scale[0], wint_height * scale[0]));
+			win[1]->setSize(sf::Vector2u(winb_width * scale[1], winb_height * scale[1]));
+
+			ImGui::SFML::Init(*win[1]);
+		}else{
+			sf::View view(sf::FloatRect(0, 0, win_width, win_height));
+			win[0]->setView(view);
+			win[0]->setSize(sf::Vector2u(win_width * scale[0], win_height * scale[0]));
+		}
+		ImGui::SFML::Init(*win[0]);
+
+		top_rect.setSize(sf::Vector2f(wint_height, wint_width));
+		top_rect.setOrigin(wint_height / 2, wint_width / 2);
+		top_rect.setPosition(wint_width / 2, wint_height / 2);
+
+		bot_rect.setSize(sf::Vector2f(winb_height, winb_width));
+		bot_rect.setOrigin(winb_height / 2, winb_width / 2);
+		if(windows == 2){
+			bot_rect.setPosition(winb_width / 2, winb_height / 2);
+		}else{
+			bot_rect.setPosition(win_width / 2, TOP_HEIGHT + BOT_HEIGHT - (winb_height / 2));
+		}
+		top_rect.setRotation(-90);
+		bot_rect.setRotation(-90);
+
+		out_rect.setSize(sf::Vector2f(win_width, win_height));
+		out_rect.setOrigin(win_width / 2, win_height / 2);
+		out_rect.setPosition(win_width / 2, win_height / 2);
+
+
+		in_tex.create(CAP_WIDTH, CAP_HEIGHT);
+		out_tex.create(win_width, win_height);
+
+		top_rect.setTexture(&in_tex);
+		top_rect.setTextureRect(sf::IntRect(0, 0, TOP_HEIGHT, TOP_WIDTH));
+
+		bot_rect.setTexture(&in_tex);
+		bot_rect.setTextureRect(sf::IntRect(0, TOP_WIDTH, BOT_HEIGHT, BOT_WIDTH));
+
+		out_rect.setTexture(&out_tex.getTexture());
+
+		if(windows == 2){
+			wint_width = (rotate[0]%2)?TOP_HEIGHT:TOP_WIDTH;
+			wint_height = (rotate[0]%2)?TOP_WIDTH:TOP_HEIGHT;
+
+			winb_width = (rotate[1]%2)?BOT_HEIGHT:BOT_WIDTH;
+			winb_height = (rotate[1]%2)?BOT_WIDTH:BOT_HEIGHT;
+
+			top_rect.setSize(sf::Vector2f(wint_height, wint_width));
+			top_rect.setOrigin(wint_height / 2, wint_width / 2);
+			top_rect.setRotation((rotate[0]+1)*-90);
+
+			bot_rect.setSize(sf::Vector2f(winb_height, winb_width));
+			bot_rect.setOrigin(winb_height / 2, winb_width / 2);
+			bot_rect.setRotation((rotate[1]+1)*-90);
+
+			win[0]->setSize(sf::Vector2u(wint_width * scale[0], wint_height * scale[0]));
+			win[1]->setSize(sf::Vector2u(winb_width * scale[1], winb_height * scale[1]));
+		}else{
+			win_width = (rotate[0]%2)?TOP_HEIGHT + BOT_HEIGHT:TOP_WIDTH;
+			win_height = (rotate[0]%2)?TOP_WIDTH:TOP_HEIGHT + BOT_HEIGHT;
+
+			out_rect.setSize(sf::Vector2f(win_width, win_height));
+			out_rect.setOrigin(win_width / 2, win_height / 2);
+			out_rect.setRotation(rotate[0]*-90);
+
+			win[0]->setSize(sf::Vector2u(win_width * scale[0], win_height * scale[0]));
+		}
 	}
 
-	top_rect.setSize(sf::Vector2f(wint_height, wint_width));
-	top_rect.setOrigin(wint_height / 2, wint_width / 2);
-	top_rect.setPosition(wint_width / 2, wint_height / 2);
-	top_rect.setRotation(-90);
-
-	bot_rect.setSize(sf::Vector2f(winb_height, winb_width));
-	bot_rect.setOrigin(winb_height / 2, winb_width / 2);
-	if(windows == 2){
-		bot_rect.setPosition(winb_width / 2, winb_height / 2);
-	}else{
-		bot_rect.setPosition(win_width / 2, TOP_HEIGHT + BOT_HEIGHT - (winb_height / 2));
-	}
-	bot_rect.setRotation(-90);
-
-	out_rect.setSize(sf::Vector2f(win_width, win_height));
-	out_rect.setOrigin(win_width / 2, win_height / 2);
-	out_rect.setPosition(win_width / 2, win_height / 2);
-
-	in_tex.create(CAP_WIDTH, CAP_HEIGHT);
-	out_tex.create(win_width, win_height);
-
-	top_rect.setTexture(&in_tex);
-	top_rect.setTextureRect(sf::IntRect(0, 0, TOP_HEIGHT, TOP_WIDTH));
-
-	bot_rect.setTexture(&in_tex);
-	bot_rect.setTextureRect(sf::IntRect(0, TOP_WIDTH, BOT_HEIGHT, BOT_WIDTH));
-
-	out_rect.setTexture(&out_tex.getTexture());
-
-	while (win[0]->isOpen()) {
+	while (menu->isOpen()) {
 		try {
-			while (win[0]->pollEvent(event)) {
-				switch (event.type) {
-				case sf::Event::Closed:
+			if(connected && (split_window ? 2 : 1) != windows){
+				if(windows){
 					win[0]->close();
+					ImGui::SFML::Shutdown(*win[0]);
+					delete win[0];
 					if(windows == 2){
 						win[1]->close();
+						ImGui::SFML::Shutdown(*win[1]);
+						delete win[1];
 					}
-					break;
+				}
+				windows = (windows == 2 ? 1 : 2);
+				goto change;
+			}
 
-				case sf::Event::KeyPressed:
-					switch (event.key.code) {
-					case sf::Keyboard::Num1:
-						//connected = open();
-						break;
+			while (menu->pollEvent(event)) {
+				ImGui::SFML::ProcessEvent(*menu, event);
 
-					case sf::Keyboard::Num2:
-						out_tex.setSmooth(!out_tex.isSmooth());
-						break;
-
-					case sf::Keyboard::Num3:
-						scale -= scale == 1 ? 0 : 1;
-						if(windows == 2){
-							win[0]->setSize(sf::Vector2u(wint_width * scale, wint_height * scale));
-							win[1]->setSize(sf::Vector2u(winb_width * scale, winb_height * scale));
-						}else{
-							win[0]->setSize(sf::Vector2u(win_width * scale, win_height * scale));
-						}
-						break;
-
-					case sf::Keyboard::Num4:
-						scale += scale == 4 ? 0 : 1;
-						if(windows == 2){
-							win[0]->setSize(sf::Vector2u(wint_width * scale, wint_height * scale));
-							win[1]->setSize(sf::Vector2u(winb_width * scale, winb_height * scale));
-						}else{
-							win[0]->setSize(sf::Vector2u(win_width * scale, win_height * scale));
-						}
-						break;
-
-					case sf::Keyboard::Num5:
-						if(windows == 2){
-							std::swap(wint_width, wint_height);
-							std::swap(winb_width, winb_height);
-
-							top_rect.setSize(sf::Vector2f(wint_height, wint_width));
-							top_rect.setOrigin(wint_height / 2, wint_width / 2);
-							top_rect.rotate(-90);
-
-							bot_rect.setSize(sf::Vector2f(winb_height, winb_width));
-							bot_rect.setOrigin(winb_height / 2, winb_width / 2);
-							bot_rect.rotate(-90);
-
-							win[0]->setSize(sf::Vector2u(wint_width * scale, wint_height * scale));
-							win[1]->setSize(sf::Vector2u(winb_width * scale, winb_height * scale));
-						}else{
-							std::swap(win_width, win_height);
-
-							out_rect.setSize(sf::Vector2f(win_width, win_height));
-							out_rect.setOrigin(win_width / 2, win_height / 2);
-							out_rect.rotate(-90);
-
-							win[0]->setSize(sf::Vector2u(win_width * scale, win_height * scale));
-						}
-
-						break;
-
-					case sf::Keyboard::Num6:
-						if(windows == 2){
-							std::swap(wint_width, wint_height);
-							std::swap(winb_width, winb_height);
-
-							top_rect.setSize(sf::Vector2f(wint_height, wint_width));
-							top_rect.setOrigin(wint_height / 2, wint_width / 2);
-							top_rect.rotate(90);
-
-							bot_rect.setSize(sf::Vector2f(winb_height, winb_width));
-							bot_rect.setOrigin(winb_height / 2, winb_width / 2);
-							bot_rect.rotate(90);
-
-							win[0]->setSize(sf::Vector2u(wint_width * scale, wint_height * scale));
-							win[1]->setSize(sf::Vector2u(winb_width * scale, winb_height * scale));
-						}else{
-							std::swap(win_width, win_height);
-
-							out_rect.setSize(sf::Vector2f(win_width, win_height));
-							out_rect.setOrigin(win_width / 2, win_height / 2);
-							out_rect.rotate(90);
-
-							win[0]->setSize(sf::Vector2u(win_width * scale, win_height * scale));
-						}
-
-						break;
-
-					case sf::Keyboard::Num7:
-						volume -= volume <= 0 ? 0 : 10;
-						audioStream->setVolume(volume);
-						break;
-
-					case sf::Keyboard::Num8:
-						volume += volume >= 100 ? 0 : 10;
-						audioStream->setVolume(volume);
-						break;
-
-					case sf::Keyboard::Num0:
+				switch (event.type) {
+					case sf::Event::Closed:
+						menu->close();
 						win[0]->close();
-						delete win[0];
 						if(windows == 2){
 							win[1]->close();
-							delete win[1];
 						}
-						windows = (windows == 2 ? 1 : 2);
-						goto change;
 						break;
-
 					default:
 						break;
+				}
+			}
+
+			if (windows && win[0]->isOpen()) {
+				while (win[0]->pollEvent(event)) {
+					ImGui::SFML::ProcessEvent(*win[0], event);
+				}
+			}
+
+			if (windows == 2 && win[1]->isOpen()) {
+				while (win[0]->pollEvent(event)) {
+					ImGui::SFML::ProcessEvent(*win[1], event);
+				}
+			}
+
+			menu->clear();
+
+			ImGui::SFML::Update(*menu, deltaClock.restart());
+			ImGui::SFML::SetCurrentWindow(*menu);
+			ImGui::SetNextWindowPos( ImVec2(0,0) );
+			ImGui::SetNextWindowSize(ImVec2(300, 200));
+        	ImGui::Begin("Menu", NULL, window_flags);
+
+			if(!connected){
+				ImGui::BeginDisabled();
+			}
+			ImGui::Checkbox("Split Windows", &split_window);
+			ImGui::Text("Window 1");
+			{
+				bool ret = ImGui::SliderInt("Scale##1", &scale[0], 1, 4, "%dx");
+				if((ret && ImGui::IsItemEdited()) || ImGui::IsItemDeactivated()){
+					if(windows == 2){
+						win[0]->setSize(sf::Vector2u(wint_width * scale[0], wint_height * scale[0]));
+					}else{
+						win[0]->setSize(sf::Vector2u(win_width * scale[0], win_height * scale[0]));	
+					}
+				}
+			}
+			{
+				bool ret = ImGui::SliderInt("Rotate##1", &rotate[0], 0, 3, "");
+				if((ret && ImGui::IsItemEdited()) || ImGui::IsItemDeactivated()){
+					if(windows == 2){
+						wint_width = (rotate[0]%2)?TOP_HEIGHT:TOP_WIDTH;
+						wint_height = (rotate[0]%2)?TOP_WIDTH:TOP_HEIGHT;
+
+						top_rect.setSize(sf::Vector2f(wint_height, wint_width));
+						top_rect.setOrigin(wint_height / 2, wint_width / 2);
+						top_rect.setRotation((rotate[0]+1)*-90);
+
+						win[0]->setSize(sf::Vector2u(wint_width * scale[0], wint_height * scale[0]));
+					}else{
+						win_width = (rotate[0]%2)?TOP_HEIGHT + BOT_HEIGHT:TOP_WIDTH;
+						win_height = (rotate[0]%2)?TOP_WIDTH:TOP_HEIGHT + BOT_HEIGHT;
+
+						out_rect.setSize(sf::Vector2f(win_width, win_height));
+						out_rect.setOrigin(win_width / 2, win_height / 2);
+						out_rect.setRotation(rotate[0]*-90);
+
+						win[0]->setSize(sf::Vector2u(win_width * scale[0], win_height * scale[0]));
+					}
+				}
+			}
+
+			if(!split_window){
+				ImGui::BeginDisabled();
+			}
+			ImGui::Text("Window 2");
+			{
+				
+				bool ret = ImGui::SliderInt("Scale##2", &scale[1], 1, 4, "%dx");
+				if((ret && ImGui::IsItemEdited()) || ImGui::IsItemDeactivated()){
+					win[1]->setSize(sf::Vector2u(winb_width * scale[1], winb_height * scale[1]));
+				}
+			}
+			{
+				bool ret = ImGui::SliderInt("Rotate##2", &rotate[1], 0, 3, "");
+				if((ret && ImGui::IsItemEdited()) || ImGui::IsItemDeactivated()){
+					winb_width = (rotate[1]%2)?BOT_HEIGHT:BOT_WIDTH;
+					winb_height = (rotate[1]%2)?BOT_WIDTH:BOT_HEIGHT;
+
+					bot_rect.setSize(sf::Vector2f(winb_height, winb_width));
+					bot_rect.setOrigin(winb_height / 2, winb_width / 2);
+					bot_rect.setRotation((rotate[1]+1)*-90);
+
+					win[1]->setSize(sf::Vector2u(winb_width * scale[1], winb_height * scale[1]));
+				}
+			}
+			if(!split_window){
+				ImGui::EndDisabled();
+			}
+
+			ImGui::Text("Volume");
+			{
+				bool ret = ImGui::Checkbox("Mute", &mute);
+				if(ImGui::IsItemDeactivated()){
+					if(mute){
+						audioStream->setVolume(0);
+					}else{
+						audioStream->setVolume(volume);
+					}
+				}
+			}
+			{
+				ImGui::SameLine(); 
+				if(mute){
+					ImGui::BeginDisabled();
+				}
+				bool ret = ImGui::SliderInt("##Volume", &volume, 0, 100, "%d%%");
+				if((ret && ImGui::IsItemEdited()) || ImGui::IsItemDeactivated()){
+					audioStream->setVolume(volume);
+				}
+				if(mute){
+					ImGui::EndDisabled();
+				}
+			}
+
+			if(!connected){
+				ImGui::EndDisabled();
+			}
+
+			ImGui::End();
+
+			ImGui::SFML::Render(*menu);
+			menu->display();
+
+			if(windows){
+				win[0]->clear();
+				if(windows == 2){
+					win[1]->clear();
+				}
+
+				if (connected) {
+					int idx = (curr_buf == 0 ? BUF_COUNT : curr_buf) - 1;
+					if(last_idx != idx){
+						map(in_buf[idx], out_buf);
+						audio(in_buf[idx], len_buf[idx], audioStream);
+						last_idx = idx;
 					}
 
-					break;
+					in_tex.update(out_buf, CAP_WIDTH, CAP_HEIGHT, 0, 0);
 
-				default:
-					break;
-				}
-			}
+					out_tex.clear();
 
-			win[0]->clear();
-			if(windows == 2){
-				win[1]->clear();
-			}
+					out_tex.draw(top_rect);
+					out_tex.draw(bot_rect);
 
-			if (connected) {
-				int idx = (curr_buf == 0 ? BUF_COUNT : curr_buf) - 1;
-				if(last_idx != idx){
-					map(in_buf[idx], out_buf);
-					audio(in_buf[idx], len_buf[idx], audioStream);
-					last_idx = idx;
+					out_tex.display();
+
+					if(windows == 2){
+						win[0]->draw(top_rect);
+						win[1]->draw(bot_rect);
+					}else{
+						win[0]->draw(out_rect);
+					}
 				}
 
-				in_tex.update(out_buf, CAP_WIDTH, CAP_HEIGHT, 0, 0);
-
-				out_tex.clear();
-
-				out_tex.draw(top_rect);
-				out_tex.draw(bot_rect);
-
-				out_tex.display();
-
+				win[0]->display();
 				if(windows == 2){
-					win[0]->draw(top_rect);
-					win[1]->draw(bot_rect);
-				}else{
-					win[0]->draw(out_rect);
+					win[1]->display();
 				}
-			}
-
-			win[0]->display();
-			if(windows == 2){
-				win[1]->display();
 			}
 		}catch(...){
 			printf("[%s] Exception.\n", NAME);
 		}
 	}
-	
-	if(windows == 2){
-		win[1]->close();
-		delete win[1];
+
+	ImGui::SFML::Shutdown();
+	if(windows){
+		if(windows == 2){
+			delete win[1];
+		}
+		delete win[0];
 	}
-	delete win[0];
+	delete menu;
 
 	audioStream->stop();
 	delete audioStream;
