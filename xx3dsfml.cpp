@@ -30,6 +30,7 @@
 
 #define FIFO_CHANNEL 0
 
+#define WINDOW_PADDING 15
 #define CAP_WIDTH 240
 #define CAP_HEIGHT 720
 
@@ -520,6 +521,8 @@ void render() {
 	std::thread thread(capture);
 
 	int win_width, win_height, wint_width, wint_height, winb_width, winb_height;
+	int screen_width = sf::VideoMode::getDesktopMode().width;
+	int screen_height = sf::VideoMode::getDesktopMode().height;
 
 	int scale[2] = {1, 1};
 	int rotate[2] = {0, 0};
@@ -534,6 +537,7 @@ void render() {
 
 	UCHAR out_buf[RGBA_FRAME_SIZE];
 	sf::RenderWindow* menu = new sf::RenderWindow(sf::VideoMode(300, 200), NAME);
+	menu->setPosition(sf::Vector2i(screen_width / 2 - menu->getSize().x - WINDOW_PADDING, screen_height / 2 - menu->getSize().y/2));
 	ImGui::SFML::Init(*menu);
 	sf::RenderWindow* win[2];
 
@@ -578,8 +582,12 @@ change:
 		if(windows == 2){
 			win[0] = new sf::RenderWindow(sf::VideoMode(wint_width, wint_height), TNAME);
 			win[1] = new sf::RenderWindow(sf::VideoMode(winb_width, winb_height), BNAME);
+
+			win[0]->setPosition(sf::Vector2i(screen_width / 2 + WINDOW_PADDING, screen_height / 2 - win[0]->getSize().y - WINDOW_PADDING));
+			win[1]->setPosition(sf::Vector2i(screen_width / 2 + WINDOW_PADDING + DELTA_WIDTH / 2, screen_height / 2 + WINDOW_PADDING));
 		}else{
 			win[0] = new sf::RenderWindow(sf::VideoMode(win_width, win_height), NAME);
+			win[0]->setPosition(sf::Vector2i(screen_width / 2 + WINDOW_PADDING, screen_height / 2 - win[0]->getSize().y/2));
 		}
 
 		win[0]->setFramerateLimit(FRAMERATE + FRAMERATE / 2);

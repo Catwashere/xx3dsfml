@@ -47,7 +47,7 @@ cat > Info.plist <<EOF
 	<key>LSRequiresIPhoneOS</key>
 	<string>false</string>
 	<key>NSHighResolutionCapable</key>
-	<string>true</string>
+	<string>false</string>
 </dict>
 </plist>
 EOF
