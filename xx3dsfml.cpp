@@ -297,6 +297,8 @@ uint32_t reset(){
 bool close() {
 	disconnect_and_connect = true;
 
+	FT_AbortPipe(handle, BULK_OUT);
+
 	if (FT_Close(handle)) {
 		printf("[%s] Close failed.\n", NAME);
 		return false;
@@ -686,9 +688,13 @@ change:
 				switch (event.type) {
 					case sf::Event::Closed:
 						menu->close();
-						win[0]->close();
-						if(windows == 2){
-							win[1]->close();
+						if(windows){
+							win[0]->close();
+							ImGui::SFML::Shutdown(*win[0]);
+							if(windows == 2){
+								win[1]->close();
+								ImGui::SFML::Shutdown(*win[1]);
+							}
 						}
 						break;
 					default:
@@ -699,12 +705,40 @@ change:
 			if (windows && win[0]->isOpen()) {
 				while (win[0]->pollEvent(event)) {
 					ImGui::SFML::ProcessEvent(*win[0], event);
+
+					switch (event.type) {
+						case sf::Event::Closed:
+							win[0]->close();
+							ImGui::SFML::Shutdown(*win[0]);
+							if(windows == 2){
+								win[1]->close();
+								ImGui::SFML::Shutdown(*win[1]);
+								delete win[1];
+							}
+							windows = 0;
+							connected = false;
+
+							break;
+						default:
+							break;
+					}
+				}
+				if(!win[0]->isOpen()){
+					delete win[0];
 				}
 			}
 
 			if (windows == 2 && win[1]->isOpen()) {
-				while (win[0]->pollEvent(event)) {
+				while (win[1]->pollEvent(event)) {
 					ImGui::SFML::ProcessEvent(*win[1], event);
+
+					switch (event.type) {
+						case sf::Event::Closed:
+							split_window = false;
+							break;
+						default:
+							break;
+					}
 				}
 			}
 
