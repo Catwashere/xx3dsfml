@@ -52,7 +52,7 @@ The following is a list of controls currently available in the xx3dsfml program:
 
 #### Notes
 
-This software currently lacks audio support as I'm unable to get the capture card in a state where it'll output more than just the frame data. This is still a work in progress, but I'm unsure if I'll ever be able to figure out how to get the capture card to output any audio data. In the meantime, audio can be captured directly from the AUX port on the N3DSXL over a line level input as a workaround.
+During the development over ChrisMalnick's code I decide to do extra stuff like add a window with menu instead of KeyPads, this is in the same repository but in another branch, [click here](https://github.com/Catwashere/xx3dsfml/tree/menu) if interested 
 
 #### Media
 
