@@ -13,6 +13,7 @@
 #include <iostream>
 #include <queue>
 #include <vector>
+#include <sys/stat.h>
 #include "imgui/imgui.h"
 #include "imgui/imgui-SFML.h"
 
@@ -23,6 +24,8 @@
 #define BNAME "xx3dsfml - bottom"
 #define NUM_PRODUCTS 2
 #define PRODUCTS (const char*[]){"N3DSXL", "N3DSXL.2"}
+
+#define SAVE_PATH "%s/Pictures/%s"
 
 #define BULK_OUT 0x02
 #define BULK_IN 0x82
@@ -69,6 +72,7 @@ uint8_t connected_3ds = 0;
 bool connected = false;
 bool running = true;
 bool disconnect_and_connect = false;
+bool save_screenshots = false;
 
 int curr_buf = 0;
 UCHAR in_buf[BUF_COUNT][BUF_SIZE];
@@ -517,6 +521,46 @@ void audio(UCHAR *p_in, ULONG end, N3DSAudio *soundStream) {
 	}
 }
 
+
+typedef sf::Image sfImage;
+template<typename... sfImage> 
+int saveImages(const sfImage&... imgs){
+	const char* homeDir = getenv("HOME");
+	char * path;
+	asprintf(&path, SAVE_PATH, homeDir, NAME);
+
+	std::time_t t = std::time(0);
+	std::tm* now = std::localtime(&t);
+
+	sf::Image images[] = {imgs...};
+	size_t size = sizeof(images)/sizeof(sf::Image);
+	for(size_t i=0; i<size; i++){
+		char * filename;
+		asprintf(&filename, "%s/Screenshot_%d-%02d-%02d_%02d-%02d-%02d_%d.png", path, now->tm_year + 1900, now->tm_mon + 1, now->tm_mday, now->tm_hour, now->tm_min, now->tm_sec, i);
+		images[i].saveToFile(filename);
+		free(filename);
+	}
+	free(path);
+	return 0;
+}
+
+int createFolder(){
+	const char* homeDir = getenv("HOME");
+	char * path;
+	asprintf(&path, SAVE_PATH, homeDir, NAME);
+	int rc = mkdir(path, 0777);
+   	if(rc == 0){
+		save_screenshots = true;
+	}else if(rc == -1){
+		if(errno == EEXIST){
+			save_screenshots = true;
+		}else{
+			printf("[%s] Failed to create folder.\n", NAME);
+		}
+	}
+	return rc;
+}
+
 void render() {
 	std::thread thread(capture);
 
@@ -762,6 +806,22 @@ change:
 				ImGui::BeginDisabled();
 			}
 			ImGui::Checkbox("Split Windows", &split_window);
+			ImGui::SameLine();
+			if(!save_screenshots){
+				ImGui::BeginDisabled();
+			}
+			{
+				if(ImGui::Button("Photo")){
+					if(windows == 2){
+						saveImages(win[0]->capture(), win[1]->capture());
+					}else{
+						saveImages(win[0]->capture());
+					}
+				}
+			}
+			if(!save_screenshots){
+				ImGui::EndDisabled();
+			}
 			ImGui::Text("Window 1");
 			{
 				bool ret = ImGui::SliderInt("Scale##1", &scale[0], 1, 4, "%dx");
@@ -918,6 +978,7 @@ change:
 }
 
 int main() {
+	createFolder();
 	render();
 	return 0;
 }
