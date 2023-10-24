@@ -15,6 +15,7 @@
 #include <vector>
 #include <sys/stat.h>
 #include "imgui/imgui.h"
+#include "imgui/imgui_extend.h"
 #include "imgui/imgui-SFML.h"
 
 #define WINDOWS 1
@@ -568,7 +569,7 @@ void render() {
 	int screen_width = sf::VideoMode::getDesktopMode().width;
 	int screen_height = sf::VideoMode::getDesktopMode().height;
 
-	int scale[2] = {1, 1};
+	float scale[2] = {1.0f, 1.0f};
 	int rotate[2] = {0, 0};
 	int last_idx = -1;
 	int volume = 100;
@@ -689,29 +690,29 @@ change:
 		out_rect.setTexture(&out_tex.getTexture());
 
 		if(windows == 2){
-			wint_width = (rotate[0]%2)?TOP_HEIGHT:TOP_WIDTH;
-			wint_height = (rotate[0]%2)?TOP_WIDTH:TOP_HEIGHT;
+			wint_width = (rotate[0]%180)?TOP_HEIGHT:TOP_WIDTH;
+			wint_height = (rotate[0]%180)?TOP_WIDTH:TOP_HEIGHT;
 
-			winb_width = (rotate[1]%2)?BOT_HEIGHT:BOT_WIDTH;
-			winb_height = (rotate[1]%2)?BOT_WIDTH:BOT_HEIGHT;
+			winb_width = (rotate[1]%180)?BOT_HEIGHT:BOT_WIDTH;
+			winb_height = (rotate[1]%180)?BOT_WIDTH:BOT_HEIGHT;
 
 			top_rect.setSize(sf::Vector2f(wint_height, wint_width));
 			top_rect.setOrigin(wint_height / 2, wint_width / 2);
-			top_rect.setRotation((rotate[0]+1)*-90);
+			top_rect.setRotation((rotate[0]+90)*-1);
 
 			bot_rect.setSize(sf::Vector2f(winb_height, winb_width));
 			bot_rect.setOrigin(winb_height / 2, winb_width / 2);
-			bot_rect.setRotation((rotate[1]+1)*-90);
+			bot_rect.setRotation((rotate[1]+90)*-1);
 
 			win[0]->setSize(sf::Vector2u(wint_width * scale[0], wint_height * scale[0]));
 			win[1]->setSize(sf::Vector2u(winb_width * scale[1], winb_height * scale[1]));
 		}else{
-			win_width = (rotate[0]%2)?TOP_HEIGHT + BOT_HEIGHT:TOP_WIDTH;
-			win_height = (rotate[0]%2)?TOP_WIDTH:TOP_HEIGHT + BOT_HEIGHT;
+			win_width = (rotate[0]%180)?TOP_HEIGHT + BOT_HEIGHT:TOP_WIDTH;
+			win_height = (rotate[0]%180)?TOP_WIDTH:TOP_HEIGHT + BOT_HEIGHT;
 
 			out_rect.setSize(sf::Vector2f(win_width, win_height));
 			out_rect.setOrigin(win_width / 2, win_height / 2);
-			out_rect.setRotation(rotate[0]*-90);
+			out_rect.setRotation(rotate[0]*-1);
 
 			win[0]->setSize(sf::Vector2u(win_width * scale[0], win_height * scale[0]));
 		}
@@ -824,7 +825,7 @@ change:
 			}
 			ImGui::Text("Window 1");
 			{
-				bool ret = ImGui::SliderInt("Scale##1", &scale[0], 1, 4, "%dx");
+				bool ret = ImGui::SliderFloatWithSteps("Scale##1", &scale[0], 1, 4, .5f, "%.1fx");
 				if((ret && ImGui::IsItemEdited()) || ImGui::IsItemDeactivated()){
 					if(windows == 2){
 						win[0]->setSize(sf::Vector2u(wint_width * scale[0], wint_height * scale[0]));
@@ -834,24 +835,24 @@ change:
 				}
 			}
 			{
-				bool ret = ImGui::SliderInt("Rotate##1", &rotate[0], 0, 3, "");
+				bool ret = ImGui::SliderIntWithSteps("Rotate##1", &rotate[0], 0, 270, 90, "%d°");
 				if((ret && ImGui::IsItemEdited()) || ImGui::IsItemDeactivated()){
 					if(windows == 2){
-						wint_width = (rotate[0]%2)?TOP_HEIGHT:TOP_WIDTH;
-						wint_height = (rotate[0]%2)?TOP_WIDTH:TOP_HEIGHT;
+						wint_width = (rotate[0]%180)?TOP_HEIGHT:TOP_WIDTH;
+						wint_height = (rotate[0]%180)?TOP_WIDTH:TOP_HEIGHT;
 
 						top_rect.setSize(sf::Vector2f(wint_height, wint_width));
 						top_rect.setOrigin(wint_height / 2, wint_width / 2);
-						top_rect.setRotation((rotate[0]+1)*-90);
+						top_rect.setRotation((rotate[0]+90)*-1);
 
 						win[0]->setSize(sf::Vector2u(wint_width * scale[0], wint_height * scale[0]));
 					}else{
-						win_width = (rotate[0]%2)?TOP_HEIGHT + BOT_HEIGHT:TOP_WIDTH;
-						win_height = (rotate[0]%2)?TOP_WIDTH:TOP_HEIGHT + BOT_HEIGHT;
+						win_width = (rotate[0]%180)?TOP_HEIGHT + BOT_HEIGHT:TOP_WIDTH;
+						win_height = (rotate[0]%180)?TOP_WIDTH:TOP_HEIGHT + BOT_HEIGHT;
 
 						out_rect.setSize(sf::Vector2f(win_width, win_height));
 						out_rect.setOrigin(win_width / 2, win_height / 2);
-						out_rect.setRotation(rotate[0]*-90);
+						out_rect.setRotation(rotate[0]*-1);
 
 						win[0]->setSize(sf::Vector2u(win_width * scale[0], win_height * scale[0]));
 					}
@@ -864,20 +865,20 @@ change:
 			ImGui::Text("Window 2");
 			{
 				
-				bool ret = ImGui::SliderInt("Scale##2", &scale[1], 1, 4, "%dx");
+				bool ret = ImGui::SliderFloatWithSteps("Scale##2", &scale[1], 1, 4, .5f, "%.1fx");
 				if((ret && ImGui::IsItemEdited()) || ImGui::IsItemDeactivated()){
 					win[1]->setSize(sf::Vector2u(winb_width * scale[1], winb_height * scale[1]));
 				}
 			}
 			{
-				bool ret = ImGui::SliderInt("Rotate##2", &rotate[1], 0, 3, "");
+				bool ret = ImGui::SliderIntWithSteps("Rotate##2", &rotate[1], 0, 270, 90, "%d°");
 				if((ret && ImGui::IsItemEdited()) || ImGui::IsItemDeactivated()){
-					winb_width = (rotate[1]%2)?BOT_HEIGHT:BOT_WIDTH;
-					winb_height = (rotate[1]%2)?BOT_WIDTH:BOT_HEIGHT;
+					winb_width = (rotate[1]%180)?BOT_HEIGHT:BOT_WIDTH;
+					winb_height = (rotate[1]%180)?BOT_WIDTH:BOT_HEIGHT;
 
 					bot_rect.setSize(sf::Vector2f(winb_height, winb_width));
 					bot_rect.setOrigin(winb_height / 2, winb_width / 2);
-					bot_rect.setRotation((rotate[1]+1)*-90);
+					bot_rect.setRotation((rotate[1]+90)*-1);
 
 					win[1]->setSize(sf::Vector2u(winb_width * scale[1], winb_height * scale[1]));
 				}
